@@ -1,0 +1,28 @@
+# Render Blueprint: Dashboard -> New -> Blueprint -> pick this repository.
+services:
+  - type: web
+    name: liran-uzan-website
+    runtime: node
+    plan: starter          # a paid plan is required for a persistent disk
+    region: frankfurt      # closest Render region to Israel
+    branch: main
+    buildCommand: npm ci
+    startCommand: npm start
+    healthCheckPath: /healthz
+    envVars:
+      - key: NODE_VERSION
+        value: "22"
+      - key: ADMIN_PASSWORD
+        sync: false        # Render asks for it when the blueprint is created
+      - key: SESSION_SECRET
+        generateValue: true
+      - key: SITE_URL
+        sync: false        # e.g. https://www.liran-uzan.co.il (no trailing slash)
+      - key: DATA_DIR
+        value: /var/data/data
+      - key: UPLOAD_DIR
+        value: /var/data/uploads
+    disk:
+      name: site-data
+      mountPath: /var/data
+      sizeGB: 1

@@ -181,6 +181,8 @@ app.post('/api/leads', (req, res) => {
   return wantsJson ? res.json({ ok: true }) : res.redirect(303, '/thanks');
 });
 
+app.get('/healthz', (req, res) => res.type('text').send('ok'));
+
 app.get('/robots.txt', (req, res) => {
   res.type('text').send(`User-agent: *\nDisallow: /admin\n${business.siteUrl ? `Sitemap: ${business.siteUrl}/sitemap.xml\n` : ''}`);
 });
