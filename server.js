@@ -80,7 +80,7 @@ function applyFilters(list, f) {
     const terms = norm(f.q).split(' ');
     out = out.filter((v) => {
       const hay = norm(
-        [v.title, v.make, v.model, v.year, v.description, categoryBySlug[v.category] && categoryBySlug[v.category].name, ...Object.values(v.specs || {})].join(' ')
+        [v.title, v.make, v.makeHe, v.model, v.year, v.description, categoryBySlug[v.category] && categoryBySlug[v.category].name, ...Object.values(v.specs || {})].join(' ')
       );
       return terms.every((t) => hay.includes(t));
     });
