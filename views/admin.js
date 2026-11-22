@@ -5,7 +5,7 @@ const { business, categories, categoryBySlug, statuses, specFields, whatsappLink
 const { icon } = require('./icons');
 const { vehicleTitle } = require('./components');
 
-const LEAD_TYPES = { contact: 'פנייה כללית', quote: 'הצעת מחיר', buy: 'רוצה לקנות', sell: 'רוצה למכור', trade: 'טרייד אין' };
+const LEAD_TYPES = { contact: 'פנייה כללית', quote: 'התעניינות בכלי', buy: 'רוצה לקנות', sell: 'רוצה למכור', trade: 'טרייד אין' };
 
 const NAV = [
   { href: '/admin', label: 'סקירה', key: 'dash', icon: 'gauge' },
@@ -229,7 +229,7 @@ function vehicleForm({ v, csrf, flash, errors = {}, newLeads }) {
         <div class="field">
           <label for="price">מחיר בש"ח</label>
           <input id="price" name="price" value="${val('price')}" inputmode="numeric" dir="ltr" aria-describedby="price-help">
-          <p class="field__help" id="price-help">השאירו ריק כדי להציג "מחיר בשיחה".</p>
+          <p class="field__help" id="price-help">השאירו ריק כדי שלא יוצג מחיר באתר.</p>
         </div>
         <div class="field">
           <label for="priceNote">הערה למחיר</label>

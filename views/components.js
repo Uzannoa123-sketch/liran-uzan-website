@@ -54,7 +54,7 @@ function vehicleCard(v, { headingLevel = 3 } = {}) {
         <p class="vcard__cat">${cat ? cat.name : ''} ${statusBadge(v)}</p>
         ${raw(`<${h} class="vcard__title">`)}${title}${raw(`</${h}>`)}
         ${dataPlate(v, { compact: true })}
-        <p class="vcard__price">${v.status === 'sold' ? 'נמכר' : v.price ? price(v.price) : 'מחיר בשיחה'}</p>
+        ${v.status === 'sold' ? html`<p class="vcard__price">נמכר</p>` : v.price ? html`<p class="vcard__price">${price(v.price)}</p>` : ''}
       </div>
     </a>
   </article>`;
@@ -103,7 +103,7 @@ function leadForm({ type = 'contact', vehicle, heading, submitLabel = 'שליח�
       : ''}
     <div class="field">
       <label for="${id('message')}">${vehicle ? 'הודעה (לא חובה)' : 'במה נוכל לעזור?'}</label>
-      <textarea id="${id('message')}" name="message" rows="${compact ? 3 : 4}">${vehicle ? `אשמח לקבל הצעת מחיר על ${vehicleTitle(vehicle)}` : ''}</textarea>
+      <textarea id="${id('message')}" name="message" rows="${compact ? 3 : 4}">${vehicle ? `אשמח לשמוע עוד על ${vehicleTitle(vehicle)}` : ''}</textarea>
     </div>
     <button class="btn btn--primary btn--block" type="submit" data-submit>
       <span data-label>${submitLabel}</span>
