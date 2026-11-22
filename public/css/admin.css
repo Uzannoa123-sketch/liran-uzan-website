@@ -100,3 +100,10 @@ body.admin { background: #f5f6f5; }
 .login img { width: 170px; margin: -0.5rem auto 0; background: var(--black); border-radius: 6px; padding: 0.5rem; }
 .login h1 { font-family: var(--display); font-size: 2.5rem; text-align: center; line-height: 1; }
 .login form { display: grid; gap: 1rem; }
+
+.sync-panel__head { display: flex; justify-content: space-between; align-items: flex-start; gap: 1rem; flex-wrap: wrap; }
+.sync-panel__head h2 { margin-bottom: 0.25rem; }
+.sync-panel__last { margin-top: 1rem; padding: 0.85rem 1rem; background: #f7f7f6; border-radius: 4px; }
+.sync-panel__last ul { list-style: none; display: grid; gap: 0.2rem; margin-top: 0.35rem; }
+.sync-panel__last.is-error { background: #fbeaea; }
+.sync-warning { color: var(--danger); font-weight: 600; margin-top: 0.5rem; }

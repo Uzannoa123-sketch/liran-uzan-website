@@ -18,6 +18,8 @@ services:
         generateValue: true
       - key: SITE_URL
         sync: false        # e.g. https://www.liran-uzan.co.il (no trailing slash)
+      - key: MACHINE_SYNC_HOURS
+        value: "6"         # how often to sync the inventory from machine.co.il (0 = off)
       - key: DATA_DIR
         value: /var/data/data
       - key: UPLOAD_DIR

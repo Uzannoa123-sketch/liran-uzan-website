@@ -9,6 +9,7 @@ const auth = require('./lib/auth');
 const { processImage, removeImage, UPLOAD_DIR } = require('./lib/images');
 const { business, categories, categoryBySlug, statuses, specFields } = require('./lib/site');
 const pages = require('./views/pages');
+const sync = require('./lib/sync');
 const admin = require('./views/admin');
 
 const app = express();
@@ -40,7 +41,7 @@ const send = (res, markup, status = 200) => res.status(status).type('html').send
 // ------------------------------------------------------------------ helpers
 
 function publicVehicles() {
-  return store.vehicles().filter((v) => !v.hidden);
+  return store.vehicles().filter((v) => !v.hidden && v.status !== 'hidden');
 }
 
 function categoryCounts(list) {
@@ -130,7 +131,7 @@ app.get('/catalog', (req, res) => {
 
 app.get('/catalog/:slug', (req, res, next) => {
   const v = store.getVehicleBySlug(req.params.slug);
-  if (!v || v.hidden) return next();
+  if (!v || v.hidden || v.status === 'hidden') return next();
   const related = publicVehicles()
     .filter((r) => r.id !== v.id && r.category === v.category && r.status !== 'sold')
     .slice(0, 3);
@@ -204,7 +205,7 @@ app.get('/sitemap.xml', (req, res) => {
 const adminRouter = express.Router();
 const openLeads = () => store.leads().filter((l) => !l.handled).length;
 const flashFrom = (req) =>
-  ({ saved: 'השינויים נשמרו', created: 'הכלי נוסף', deleted: 'נמחק', status: 'המצב עודכן', uploaded: 'התמונה הועלתה' })[req.query.ok];
+  ({ saved: 'השינויים נשמרו', created: 'הכלי נוסף', deleted: 'נמחק', status: 'המצב עודכן', uploaded: 'התמונה הועלתה', sync: 'הסנכרון עם משין התחיל. רעננו את העמוד בעוד דקה כדי לראות את התוצאה.' })[req.query.ok];
 
 adminRouter.get('/login', (req, res) => {
   if (auth.isAuthed(req)) return res.redirect('/admin');
@@ -250,6 +251,7 @@ adminRouter.get('/vehicles', (req, res) =>
     admin.vehiclesList({
       vehicles: store.vehicles(),
       filter: statuses[req.query.status] ? req.query.status : '',
+      sync: { last: store.settings().lastSync, running: sync.isRunning(), enabled: Number(process.env.MACHINE_SYNC_HOURS ?? 6) > 0, hours: Number(process.env.MACHINE_SYNC_HOURS ?? 6) },
       csrf: res.locals.csrf,
       flash: flashFrom(req),
       newLeads: openLeads(),
@@ -355,21 +357,30 @@ adminRouter.post('/vehicles/:id', withUpload('photos'), auth.checkCsrf, async (r
     }
   }
   images = images.concat(await addPhotos(req.files));
-  store.upsertVehicle({ ...data, id: existing.id, images });
+  const syncHidden = data.status === existing.status ? Boolean(existing.syncHidden) : false;
+  store.upsertVehicle({ ...data, id: existing.id, images, syncHidden });
   res.redirect(303, `/admin/vehicles/${existing.id}?ok=saved${action ? '#photos' : ''}`);
 });
 
 adminRouter.post('/vehicles/:id/status', auth.checkCsrf, (req, res, next) => {
   const v = store.getVehicle(req.params.id);
   if (!v) return next();
-  if (statuses[req.body.status]) store.upsertVehicle({ id: v.id, status: req.body.status });
+  if (statuses[req.body.status]) store.upsertVehicle({ id: v.id, status: req.body.status, syncHidden: false });
   res.redirect(303, '/admin/vehicles?ok=status');
 });
 
 adminRouter.post('/vehicles/:id/delete', auth.checkCsrf, (req, res) => {
   const v = store.deleteVehicle(req.params.id);
-  if (v) (v.images || []).forEach(removeImage);
+  if (v) {
+    (v.images || []).forEach(removeImage);
+    sync.forget(v);
+  }
   res.redirect(303, '/admin/vehicles?ok=deleted');
+});
+
+adminRouter.post('/sync', auth.checkCsrf, (req, res) => {
+  sync.runSync('manual');
+  res.redirect(303, '/admin/vehicles?ok=sync');
 });
 
 adminRouter.get('/leads', (req, res) =>
@@ -455,6 +466,7 @@ const PORT = Number(process.env.PORT) || 3000;
 if (require.main === module) {
   app.listen(PORT, () => {
     console.log(`Site running on http://localhost:${PORT}`);
+    sync.schedule();
     if (!process.env.ADMIN_PASSWORD) console.warn('ADMIN_PASSWORD is not set – the admin area is locked.');
   });
 }

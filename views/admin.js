@@ -91,13 +91,49 @@ function dashboard({ vehicles, leads, csrf, flash }) {
   return layout({ title: 'סקירה', active: 'dash', body, csrf, flash, newLeads: open.length });
 }
 
-function vehiclesList({ vehicles, filter, csrf, flash, newLeads }) {
+function syncPanel(sync, csrf) {
+  if (!sync) return '';
+  const last = sync.last;
+  const fmt = new Intl.DateTimeFormat('he-IL', { dateStyle: 'short', timeStyle: 'short', timeZone: 'Asia/Jerusalem' });
+  const list = (items) => (items.length > 5 ? `${items.slice(0, 5).join(', ')} ועוד ${items.length - 5}` : items.join(', '));
+  return html`<section class="panel sync-panel" aria-labelledby="sync-title">
+    <div class="sync-panel__head">
+      <div>
+        <h2 id="sync-title">סנכרון עם משין</h2>
+        <p class="muted small">${sync.enabled
+          ? `האתר בודק את המודעות של לירן ב-machine.co.il כל ${sync.hours} שעות. מודעה חדשה נוספת לאתר, ומודעה שירדה מוסתרת.`
+          : 'הסנכרון האוטומטי כבוי. אפשר לסנכרן ידנית.'}</p>
+      </div>
+      <form method="post" action="/admin/sync">
+        <input type="hidden" name="_csrf" value="${csrf}">
+        <button class="btn btn--outline btn--small" type="submit" ${sync.running ? raw('disabled') : ''}>${sync.running ? 'מסנכרן…' : 'סנכרון עכשיו'}</button>
+      </form>
+    </div>
+    ${last
+      ? html`<div class="sync-panel__last ${last.ok ? '' : 'is-error'}">
+          <p><strong>סנכרון אחרון:</strong> ${fmt.format(new Date(last.at))}${last.ok ? ` · ${last.ads} מודעות במשין` : ''}</p>
+          ${last.ok
+            ? html`<ul class="small">
+                <li>נוספו: ${last.added.length ? list(last.added) : 'אין'}</li>
+                <li>הוסתרו כי המודעה ירדה: ${last.hidden.length ? list(last.hidden) : 'אין'}</li>
+                ${last.restored.length ? html`<li>חזרו לאתר: ${list(last.restored)}</li>` : ''}
+              </ul>`
+            : html`<p class="small">הסנכרון נכשל: ${last.error}. לא בוצעו שינויים, והסנכרון הבא ינסה שוב.</p>`}
+          ${last.warning ? html`<p class="small sync-warning">${last.warning}</p>` : ''}
+          ${last.errors && last.errors.length ? html`<p class="small sync-warning">לא הצלחנו לייבא ${last.errors.length} מודעות. הן ינוסו שוב בסנכרון הבא.</p>` : ''}
+        </div>`
+      : html`<p class="small">עוד לא בוצע סנכרון.</p>`}
+  </section>`;
+}
+
+function vehiclesList({ vehicles, filter, sync, csrf, flash, newLeads }) {
   const list = filter ? vehicles.filter((v) => v.status === filter) : vehicles;
   const body = html`
   <div class="admin-head">
     <h1>כלים <span class="muted">(${vehicles.length})</span></h1>
     <a class="btn btn--primary" href="/admin/vehicles/new">+ הוספת כלי</a>
   </div>
+  ${syncPanel(sync, csrf)}
   <nav class="tabs" aria-label="סינון לפי מצב">
     <a href="/admin/vehicles" ${!filter ? raw('aria-current="page"') : ''}>הכול</a>
     ${Object.entries(statuses).map(([k, l]) => html`<a href="/admin/vehicles?status=${k}" ${filter === k ? raw('aria-current="page"') : ''}>${l}</a>`)}
@@ -109,7 +145,7 @@ function vehiclesList({ vehicles, filter, csrf, flash, newLeads }) {
           ${list.map(
             (v) => html`<tr class="${v.status === 'sold' ? 'is-sold' : ''}">
               <td>${v.images && v.images[0] ? html`<img class="thumb" src="${v.images[0].sm}" alt="" width="96" height="72">` : html`<span class="thumb thumb--empty">${icon('image', { size: 20 })}</span>`}</td>
-              <td><a class="strong" href="/admin/vehicles/${v.id}">${vehicleTitle(v)}</a><div class="muted small">${(v.images || []).length} תמונות</div></td>
+              <td><a class="strong" href="/admin/vehicles/${v.id}">${vehicleTitle(v)}</a><div class="muted small">${(v.images || []).length} תמונות${v.source && v.source.site === 'machine.co.il' ? html` · <a href="https://www.machine.co.il/adpage?adid=${v.source.adid}" target="_blank" rel="noopener">ממשין</a>` : ''}${v.syncHidden ? ' · המודעה ירדה ממשין' : ''}</div></td>
               <td>${categoryBySlug[v.category] ? categoryBySlug[v.category].short : '—'}</td>
               <td>${v.year || '—'}</td>
               <td>${v.price ? price(v.price) : '—'}</td>
@@ -125,7 +161,7 @@ function vehiclesList({ vehicles, filter, csrf, flash, newLeads }) {
               </td>
               <td class="actions">
                 <a href="/admin/vehicles/${v.id}" class="icon-btn" title="עריכה">${icon('edit', { size: 18 })}<span class="sr-only">עריכת ${vehicleTitle(v)}</span></a>
-                <a href="/catalog/${v.slug}" class="icon-btn" target="_blank" rel="noopener" title="צפייה באתר">${icon('eye', { size: 18 })}<span class="sr-only">צפייה באתר</span></a>
+                ${v.status !== 'hidden' ? html`<a href="/catalog/${v.slug}" class="icon-btn" target="_blank" rel="noopener" title="צפייה באתר">${icon('eye', { size: 18 })}<span class="sr-only">צפייה באתר</span></a>` : ''}
               </td>
             </tr>`
           )}
@@ -146,8 +182,11 @@ function vehicleForm({ v, csrf, flash, errors = {}, newLeads }) {
   const body = html`
   <div class="admin-head">
     <h1>${isNew ? 'הוספת כלי' : `עריכה: ${vehicleTitle(v)}`}</h1>
-    ${!isNew ? html`<a class="btn btn--outline" href="/catalog/${v.slug}" target="_blank" rel="noopener">${icon('eye', { size: 18 })}צפייה באתר</a>` : ''}
+    ${!isNew && v.status !== 'hidden' ? html`<a class="btn btn--outline" href="/catalog/${v.slug}" target="_blank" rel="noopener">${icon('eye', { size: 18 })}צפייה באתר</a>` : ''}
   </div>
+  ${v.source && v.source.site === 'machine.co.il'
+    ? html`<p class="muted small">הכלי יובא מ<a href="https://www.machine.co.il/adpage?adid=${v.source.adid}" target="_blank" rel="noopener">מודעה ${v.source.adid} במשין</a>. שינויים שתשמרו כאן לא יידרסו בסנכרון.${v.syncHidden ? ' המודעה ירדה ממשין, ולכן הכלי מוסתר מהאתר. כדי להחזיר אותו, שנו את המצב ל"זמין".' : ''}</p>`
+    : ''}
   ${Object.keys(errors).length ? html`<p class="form-error" role="alert" tabindex="-1" data-error-summary>יש לתקן את השדות המסומנים.</p>` : ''}
   <form class="vform" method="post" action="${isNew ? '/admin/vehicles/new' : `/admin/vehicles/${v.id}`}" enctype="multipart/form-data">
     <input type="hidden" name="_csrf" value="${csrf}">
