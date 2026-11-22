@@ -205,8 +205,6 @@ const SORTS = [
   ['new', 'חדש במלאי'],
   ['year-desc', 'שנה: מהחדש לישן'],
   ['year-asc', 'שנה: מהישן לחדש'],
-  ['price-asc', 'מחיר: מהנמוך לגבוה'],
-  ['price-desc', 'מחיר: מהגבוה לנמוך'],
   ['hours-asc', 'שעות עבודה: מהמעט להרבה'],
 ];
 
@@ -390,7 +388,11 @@ function vehicle({ v, related }) {
         <p class="vpage__cat">${cat ? cat.name : ''} ${statusBadge(v)}</p>
         <h1 class="vpage__title">${title}</h1>
         ${dataPlate(v)}
-        <p class="vpage__price">${sold ? 'הכלי נמכר' : v.price ? price(v.price) : 'מחיר בשיחה עם לירן'}${v.price && !sold && v.priceNote ? html`<span class="vpage__price-note">${v.priceNote}</span>` : ''}</p>
+        ${sold
+          ? html`<p class="vpage__price">הכלי נמכר</p>`
+          : v.price
+            ? html`<p class="vpage__price">${price(v.price)}${v.priceNote ? html`<span class="vpage__price-note">${v.priceNote}</span>` : ''}</p>`
+            : ''}
         ${sold
           ? html`<p class="vpage__sold-note">הכלי הזה כבר נמכר. יש לנו כלים דומים במלאי, ולירן יכול לאתר עבורכם כלי כזה.</p>
               <div class="cta-row cta-row--stack">
@@ -402,7 +404,7 @@ function vehicle({ v, related }) {
                 <a class="btn btn--whatsapp" href="${whatsappLink(waText)}" target="_blank" rel="noopener">${icon('whatsapp')}שאלה על הכלי ב-WhatsApp</a>
               </div>
               <div class="quote-box" id="quote">
-                ${leadForm({ type: 'quote', vehicle: v, heading: 'בקשת הצעת מחיר', submitLabel: 'קבלת הצעת מחיר', compact: true, idPrefix: 'quote' })}
+                ${leadForm({ type: 'quote', vehicle: v, heading: 'מתעניינים בכלי?', submitLabel: 'שליחת פרטים', compact: true, idPrefix: 'quote' })}
               </div>`}
       </aside>
     </div>
@@ -496,7 +498,7 @@ function trade() {
         <ol class="steps__list">
           <li><h3>שולחים פרטים</h3><p>יצרן, דגם, שנה, שעות עבודה ותמונות של הכלי שלכם.</p></li>
           <li><h3>מקבלים הערכה</h3><p>לירן בודק את הפרטים, ובמידת הצורך רואה את הכלי, ונותן הערכת שווי.</p></li>
-          <li><h3>בוחרים כלי חדש</h3><p>בוחרים כלי מהמלאי, והשווי של הכלי שלכם יורד מהמחיר.</p></li>
+          <li><h3>בוחרים כלי חדש</h3><p>בוחרים כלי מהמלאי, והשווי של הכלי שלכם נכנס כחלק מהעסקה.</p></li>
           <li><h3>סוגרים ומחליפים</h3><p>משלמים את ההפרש, אפשר בתשלומים, ויוצאים לעבוד עם הכלי החדש.</p></li>
         </ol>
       </section>
