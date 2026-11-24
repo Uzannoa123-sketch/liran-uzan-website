@@ -27,8 +27,7 @@ function home({ vehicles, testimonials, settings, counts }) {
       <p class="hero__lead">טרקטורים חקלאיים, מיני מעמיסים, בובקטים, שופלים וציוד מכני כבד. מגיעים לאולם התצוגה בעולש, רואים את הכלי ויוצאים לנסיעת מבחן. אפשר גם טרייד אין ותשלומים.</p>
       ${contactButtons({ text: 'היי לירן, אשמח לשמוע מה יש במלאי' })}
       <a class="hero__stock" href="/catalog">
-        <span class="hero__stock-num">${available.length}</span>
-        <span class="hero__stock-label">${available.length === 1 ? 'כלי זמין במלאי' : 'כלים זמינים במלאי'}</span>
+        <span class="hero__stock-label">לכל הכלים במלאי</span>
         ${icon('arrowEnd', { size: 20 })}
       </a>
     </div>
@@ -40,7 +39,6 @@ function home({ vehicles, testimonials, settings, counts }) {
       ${categories.map(
         (c) => html`<li><a class="cat-band__item" href="/catalog?category=${c.slug}">
           <span class="cat-band__name">${c.name}</span>
-          <span class="cat-band__count">${counts[c.slug] ? `${counts[c.slug]} במלאי` : 'לבירור מלאי'}</span>
         </a></li>`
       )}
     </ul>
@@ -189,7 +187,7 @@ function categoriesPage({ counts, covers }) {
             <div class="cat-tile__body">
               <h2 class="cat-tile__name">${c.name}</h2>
               <p>${c.blurb}</p>
-              <span class="cat-tile__count">${counts[c.slug] ? `${counts[c.slug]} כלים במלאי` : 'שאלו אותנו על המלאי'} ${icon('arrowEnd', { size: 18 })}</span>
+              <span class="cat-tile__count">לכלים בקטגוריה ${icon('arrowEnd', { size: 18 })}</span>
             </div>
           </a></li>`
         )}
@@ -273,7 +271,6 @@ function catalog({ results, filters, options, total }) {
 
       <div class="results">
         <div class="results__bar">
-          <p class="results__count" role="status">${results.length === total && !activeCount ? `${total} כלים` : `${results.length} מתוך ${total} כלים`}</p>
           <form method="get" action="/catalog" class="sort" data-sort-form>
             ${Object.entries(filters)
               .filter(([k, v]) => v && k !== 'sort')
