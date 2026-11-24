@@ -10,6 +10,7 @@ const { processImage, removeImage, UPLOAD_DIR } = require('./lib/images');
 const { business, categories, categoryBySlug, statuses, specFields } = require('./lib/site');
 const pages = require('./views/pages');
 const sync = require('./lib/sync');
+const mailer = require('./lib/mailer');
 const admin = require('./views/admin');
 
 const app = express();
@@ -176,8 +177,10 @@ app.post('/api/leads', (req, res) => {
   if (digits.length < 9 || digits.length > 13) fields.phone = 'מספר הטלפון צריך לכלול 9–10 ספרות, למשל 050-1234567.';
   if (Object.keys(fields).length) return fail(400, 'יש לתקן את השדות המסומנים.', fields);
 
-  if (lead.vehicleId && !store.getVehicle(lead.vehicleId)) lead.vehicleId = '';
-  store.addLead(lead);
+  const vehicle = lead.vehicleId ? store.getVehicle(lead.vehicleId) : null;
+  if (!vehicle) lead.vehicleId = '';
+  const saved = store.addLead(lead);
+  mailer.notifyLead(saved, vehicle);
   console.log(`[lead] ${lead.type} from ${lead.name}`);
   return wantsJson ? res.json({ ok: true }) : res.redirect(303, '/thanks');
 });
@@ -205,7 +208,7 @@ app.get('/sitemap.xml', (req, res) => {
 const adminRouter = express.Router();
 const openLeads = () => store.leads().filter((l) => !l.handled).length;
 const flashFrom = (req) =>
-  ({ saved: 'השינויים נשמרו', created: 'הכלי נוסף', deleted: 'נמחק', status: 'המצב עודכן', uploaded: 'התמונה הועלתה', sync: 'הסנכרון עם משין התחיל. רעננו את העמוד בעוד דקה כדי לראות את התוצאה.' })[req.query.ok];
+  ({ saved: 'השינויים נשמרו', created: 'הכלי נוסף', deleted: 'נמחק', status: 'המצב עודכן', uploaded: 'התמונה הועלתה', mail: 'מייל הבדיקה נשלח. בדקו את תיבת הדואר (וגם את תיקיית הספאם).', sync: 'הסנכרון עם משין התחיל. רעננו את העמוד בעוד דקה כדי לראות את התוצאה.' })[req.query.ok];
 
 adminRouter.get('/login', (req, res) => {
   if (auth.isAuthed(req)) return res.redirect('/admin');
@@ -427,8 +430,27 @@ adminRouter.post('/testimonials/:id/delete', auth.checkCsrf, (req, res) => {
 });
 
 adminRouter.get('/settings', (req, res) =>
-  send(res, admin.settingsPage({ settings: store.settings(), csrf: res.locals.csrf, flash: flashFrom(req), newLeads: openLeads() }))
+  send(
+    res,
+    admin.settingsPage({
+      settings: store.settings(),
+      mail: { configured: mailer.isConfigured(), to: mailer.maskedRecipients(), error: req.query.mailerr },
+      csrf: res.locals.csrf,
+      flash: flashFrom(req),
+      newLeads: openLeads(),
+    })
+  )
 );
+
+adminRouter.post('/settings/test-email', auth.checkCsrf, async (req, res) => {
+  try {
+    const r = await mailer.sendTest();
+    if (!r.sent) return res.redirect(303, '/admin/settings?mailerr=' + encodeURIComponent('ההתראות במייל עוד לא הוגדרו.'));
+    res.redirect(303, '/admin/settings?ok=mail#email');
+  } catch (err) {
+    res.redirect(303, '/admin/settings?mailerr=' + encodeURIComponent(err.message.slice(0, 200)) + '#email');
+  }
+});
 
 const SETTING_IMAGES = ['heroImage', 'aboutImage'];
 

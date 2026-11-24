@@ -12,7 +12,7 @@ const NAV = [
   { href: '/admin/vehicles', label: 'כלים', key: 'vehicles', icon: 'tag' },
   { href: '/admin/leads', label: 'פניות', key: 'leads', icon: 'inbox' },
   { href: '/admin/testimonials', label: 'המלצות', key: 'testimonials', icon: 'quote' },
-  { href: '/admin/settings', label: 'תמונות האתר', key: 'settings', icon: 'image' },
+  { href: '/admin/settings', label: 'הגדרות', key: 'settings', icon: 'image' },
 ];
 
 function layout({ title, active, body, csrf, flash, newLeads = 0 }) {
@@ -372,7 +372,7 @@ function testimonialsPage({ testimonials, csrf, flash, newLeads }) {
   return layout({ title: 'המלצות', active: 'testimonials', body, csrf, flash, newLeads });
 }
 
-function settingsPage({ settings, csrf, flash, newLeads }) {
+function settingsPage({ settings, mail = {}, csrf, flash, newLeads }) {
   const slot = (key, title, help) => html`<section class="panel">
     <h2>${title}</h2>
     <p class="muted">${help}</p>
@@ -387,11 +387,25 @@ function settingsPage({ settings, csrf, flash, newLeads }) {
       ? html`<form method="post" action="/admin/settings/${key}/delete"><input type="hidden" name="_csrf" value="${csrf}"><button class="btn btn--text" type="submit" data-confirm="להסיר את התמונה?">הסרת התמונה</button></form>`
       : ''}
   </section>`;
+  const mailPanel = html`<section class="panel" id="email" aria-labelledby="email-title">
+    <h2 id="email-title">התראות במייל על פניות</h2>
+    ${mail.configured
+      ? html`<p>כל פנייה חדשה מהאתר נשלחת במייל אל <strong dir="ltr">${mail.to}</strong>.</p>`
+      : html`<p>ההתראות כבויות. כדי להפעיל אותן מגדירים ב-Render את פרטי המייל (SMTP_HOST, SMTP_PORT, SMTP_USER, SMTP_PASS ו-LEAD_EMAIL_TO). ההסבר המלא נמצא בקובץ README.</p>`}
+    ${mail.error ? html`<p class="form-error" role="alert">שליחת מייל הבדיקה נכשלה: ${mail.error}</p>` : ''}
+    ${mail.configured
+      ? html`<form method="post" action="/admin/settings/test-email">
+          <input type="hidden" name="_csrf" value="${csrf}">
+          <button class="btn btn--outline btn--small" type="submit">שליחת מייל בדיקה</button>
+        </form>`
+      : ''}
+  </section>`;
   const body = html`
-  <div class="admin-head"><h1>תמונות האתר</h1></div>
+  <div class="admin-head"><h1>הגדרות</h1></div>
+  ${mailPanel}
   ${slot('heroImage', 'תמונה ראשית בדף הבית', 'תמונה רחבה ואיכותית של כלי בשטח. מומלץ לפחות 1800 פיקסלים ברוחב. בלי תמונה, מוצג הלוגו.')}
   ${slot('aboutImage', 'תמונה לעמוד אודות', 'למשל לירן במגרש או ליד כלי. בלי תמונה, מוצג הלוגו.')}`;
-  return layout({ title: 'תמונות האתר', active: 'settings', body, csrf, flash, newLeads });
+  return layout({ title: 'הגדרות', active: 'settings', body, csrf, flash, newLeads });
 }
 
 module.exports = { login, dashboard, vehiclesList, vehicleForm, leadsPage, testimonialsPage, settingsPage, LEAD_TYPES };
