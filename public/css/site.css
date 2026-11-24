@@ -231,7 +231,7 @@ main:focus { outline: none; }
   color: var(--white); text-decoration: none; border-top: 1px solid var(--iron); padding-top: 1.25rem;
 }
 .hero__stock-num { font-family: var(--display); font-weight: 700; font-size: 3.25rem; line-height: 0.8; color: var(--orange); font-variant-numeric: tabular-nums; }
-.hero__stock-label { font-weight: 600; }
+.hero__stock-label { font-weight: 600; font-size: var(--step-1); }
 .hero__stock .icon { align-self: center; transition: transform 160ms var(--ease-out); }
 .hero__stock:hover .icon { transform: translateX(-4px); }
 
@@ -523,7 +523,7 @@ main:focus { outline: none; }
 .range { display: grid; grid-template-columns: 1fr auto 1fr; gap: 0.5rem; align-items: center; }
 .filters__actions { display: flex; flex-wrap: wrap; gap: 0.5rem; align-items: center; }
 .filters__actions .btn--primary { flex: 1; }
-.results__bar { display: flex; align-items: center; justify-content: space-between; flex-wrap: wrap; gap: 1rem; margin-bottom: 1.25rem; }
+.results__bar { display: flex; align-items: center; justify-content: flex-end; flex-wrap: wrap; gap: 1rem; margin-bottom: 1.25rem; }
 .results__count { margin: 0; font-weight: 600; color: var(--steel); }
 .sort { display: flex; align-items: center; gap: 0.5rem; }
 .sort label { font-weight: 600; font-size: 0.9375rem; }
