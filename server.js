@@ -24,6 +24,24 @@ app.use((req, res, next) => {
   next();
 });
 
+// Once the site has its own domain (SITE_URL), permanently redirect the old
+// Render address there, so visitors and Google end up on one address.
+const canonicalOrigin = (() => {
+  try {
+    return business.siteUrl ? new URL(business.siteUrl).origin : '';
+  } catch {
+    return '';
+  }
+})();
+app.use((req, res, next) => {
+  if (!canonicalOrigin || req.path === '/healthz') return next();
+  const host = (req.hostname || '').toLowerCase();
+  const canonicalHost = new URL(canonicalOrigin).hostname;
+  const isAlias = host.endsWith('.onrender.com') || host === `www.${canonicalHost}` || `www.${host}` === canonicalHost;
+  if (isAlias && host !== canonicalHost) return res.redirect(301, canonicalOrigin + req.originalUrl);
+  next();
+});
+
 app.use(express.urlencoded({ extended: false, limit: '200kb' }));
 app.use(express.json({ limit: '50kb' }));
 
