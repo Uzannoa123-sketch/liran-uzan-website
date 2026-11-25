@@ -132,6 +132,12 @@ app.get('/about', (req, res) => send(res, pages.about({ settings: store.settings
 app.get('/categories', (req, res) => {
   const vehicles = publicVehicles();
   const covers = {};
+  // A cover picked in the admin wins; otherwise the newest vehicle in stock with a photo.
+  const picked = store.settings().categoryCovers || {};
+  for (const [slug, vid] of Object.entries(picked)) {
+    const v = vehicles.find((x) => x.id === vid);
+    if (v && v.images && v.images[0]) covers[slug] = v.images[0];
+  }
   for (const v of vehicles) if (!covers[v.category] && v.status !== 'sold' && v.images && v.images[0]) covers[v.category] = v.images[0];
   send(res, pages.categoriesPage({ counts: categoryCounts(vehicles), covers }));
 });
@@ -465,12 +471,24 @@ adminRouter.get('/settings', (req, res) =>
     admin.settingsPage({
       settings: store.settings(),
       mail: { configured: mailer.isConfigured(), to: mailer.maskedRecipients(), error: req.query.mailerr },
+      vehicles: store.vehicles(),
       csrf: res.locals.csrf,
       flash: flashFrom(req),
       newLeads: openLeads(),
     })
   )
 );
+
+adminRouter.post('/settings/category-covers', auth.checkCsrf, (req, res) => {
+  const ids = new Set(store.vehicles().map((v) => v.id));
+  const covers = {};
+  for (const c of categories) {
+    const vid = req.body[`cover_${c.slug}`];
+    if (typeof vid === 'string' && ids.has(vid)) covers[c.slug] = vid;
+  }
+  store.saveSettings({ categoryCovers: covers });
+  res.redirect(303, '/admin/settings?ok=saved#covers');
+});
 
 adminRouter.post('/settings/test-email', auth.checkCsrf, async (req, res) => {
   try {
