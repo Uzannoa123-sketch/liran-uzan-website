@@ -23,7 +23,7 @@ function layout({ title, active, body, csrf, flash, newLeads = 0 }) {
   <meta name="viewport" content="width=device-width, initial-scale=1">
   <meta name="robots" content="noindex, nofollow">
   <title>${title} | ניהול האתר</title>
-  <link rel="icon" href="/img/favicon.png" type="image/png">
+  <link rel="icon" href="/favicon.ico" sizes="48x48">
   <link rel="stylesheet" href="/css/site.css">
   <link rel="stylesheet" href="/css/admin.css">
 </head>

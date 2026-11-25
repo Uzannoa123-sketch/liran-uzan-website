@@ -175,7 +175,7 @@ function about({ settings }) {
     </div>
   </section>
   ${contactBand()}`;
-  return page({ title: 'אודות', active: 'about', body, canonical: '/about' });
+  return page({ title: 'אודות', active: 'about', body, canonical: '/about', description: 'לירן אוזן קונה, מוכר ומחליף טרקטורים ומעמיסים חקלאיים מאולם התצוגה במושב עולש שבשרון. נסיעת מבחן במקום, טרייד אין ותשלומים.' });
 }
 
 // ------------------------------------------------------------------ categories
@@ -199,7 +199,7 @@ function categoriesPage({ counts, covers }) {
       </ul>
     </div>
   </section>`;
-  return page({ title: 'קטגוריות', active: 'categories', body, canonical: '/categories' });
+  return page({ title: 'קטגוריות: טרקטורים, מעמיסים וציוד מכני', active: 'categories', body, canonical: '/categories', description: 'טרקטורים חקלאיים, מיני מעמיסים, בובקטים, שופלים, מלגזות, נגררים, טרקטורונים וציוד מכני כבד למכירה אצל לירן אוזן, מושב עולש. 052-6003333' });
 }
 
 // ------------------------------------------------------------------ catalog
@@ -312,7 +312,7 @@ function catalog({ results, filters, options, total }) {
     </div>
   </section>`;
   return page({
-    title,
+    title: cat ? `${title} למכירה` : 'מלאי כלים: טרקטורים ומעמיסים למכירה',
     active: 'catalog',
     body,
     canonical: cat ? `/catalog?category=${cat.slug}` : '/catalog',
@@ -464,7 +464,7 @@ function vehicle({ v, related }) {
   <script type="application/json" data-gallery-data>${raw(JSON.stringify(images.map((i) => ({ lg: i.lg, alt: title }))).replace(/</g, '\\u003c'))}</script>`;
 
   return page({
-    title,
+    title: sold ? `${title} (נמכר)` : `${title} למכירה`,
     active: 'catalog',
     body,
     jsonLd,

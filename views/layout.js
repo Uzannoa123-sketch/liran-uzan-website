@@ -101,31 +101,51 @@ function floatingActions() {
   </div>`;
 }
 
-function localBusinessJsonLd() {
-  return {
-    '@context': 'https://schema.org',
-    '@type': 'AutoDealer',
-    name: business.fullName,
-    telephone: business.phoneTel,
-    address: {
-      '@type': 'PostalAddress',
-      addressLocality: 'עולש',
-      addressRegion: 'השרון',
-      addressCountry: 'IL',
+// Absolute URL on the live domain (falls back to a path when SITE_URL is unset).
+function abs(p) {
+  return business.siteUrl && p && p.startsWith('/') ? business.siteUrl + p : p;
+}
+
+// Structured data Google reads for the site name, logo and business card.
+function siteJsonLd() {
+  const base = business.siteUrl || undefined;
+  return [
+    {
+      '@context': 'https://schema.org',
+      '@type': 'WebSite',
+      name: business.fullName,
+      alternateName: [business.name, 'לירן אוזן טרקטורים', 'Lirantrac'],
+      url: base ? `${base}/` : undefined,
+      inLanguage: 'he-IL',
     },
-    image: business.siteUrl ? `${business.siteUrl}/img/logo-full.webp` : undefined,
-    url: business.siteUrl || undefined,
-  };
+    {
+      '@context': 'https://schema.org',
+      '@type': 'AutoDealer',
+      name: business.fullName,
+      description: 'קנייה, מכירה וטרייד אין של טרקטורים חקלאיים, מיני מעמיסים, שופלים וציוד מכני. אולם תצוגה במושב עולש שבשרון.',
+      telephone: business.phoneTel,
+      url: base ? `${base}/` : undefined,
+      logo: abs('/img/icon-192.png'),
+      image: abs('/img/og-image.jpg'),
+      address: {
+        '@type': 'PostalAddress',
+        addressLocality: 'עולש',
+        addressRegion: 'השרון',
+        addressCountry: 'IL',
+      },
+      areaServed: 'IL',
+    },
+  ];
 }
 
 function page({ title, description, active, body, jsonLd, image, canonical, bodyClass = '' }) {
-  const fullTitle = title ? `${title} | ${business.fullName}` : business.fullName;
+  // Home: the business name first, then what it does. Other pages: the page, then the business.
+  const fullTitle = title ? `${title} | ${business.fullName}` : `${business.fullName} | קנייה, מכירה וטרייד אין`;
   const desc =
     description ||
-    'קנייה, מכירה וטרייד אין של טרקטורים חקלאיים, מיני מעמיסים, בובקטים, שופלים וציוד מכני כבד. מושב עולש, השרון. 052-6003333';
-  const ld = [localBusinessJsonLd(), ...(jsonLd ? [jsonLd] : [])];
-  const ogImage = image || '/img/logo-full.webp';
-  const abs = (p) => (business.siteUrl && p.startsWith('/') ? business.siteUrl + p : p);
+    'טרקטורים חקלאיים, מיני מעמיסים, שופלים וציוד מכני למכירה. אולם תצוגה במושב עולש שבשרון: רואים את הכלי, יוצאים לנסיעת מבחן וסוגרים עסקה. קנייה, מכירה וטרייד אין. 052-6003333';
+  const ld = [...siteJsonLd(), ...(jsonLd ? [jsonLd] : [])];
+  const ogImage = image || '/img/og-image.jpg';
   return html`<!doctype html>
 <html lang="he" dir="rtl">
 <head>
@@ -135,12 +155,18 @@ function page({ title, description, active, body, jsonLd, image, canonical, body
   <meta name="description" content="${desc}">
   <meta name="theme-color" content="#000000">
   ${canonical && business.siteUrl ? html`<link rel="canonical" href="${business.siteUrl + canonical}">` : ''}
+  <meta name="robots" content="index, follow, max-image-preview:large">
   <meta property="og:type" content="website">
   <meta property="og:locale" content="he_IL">
+  <meta property="og:site_name" content="${business.fullName}">
   <meta property="og:title" content="${fullTitle}">
   <meta property="og:description" content="${desc}">
   <meta property="og:image" content="${abs(ogImage)}">
-  <link rel="icon" href="/img/favicon.png" type="image/png">
+  ${canonical && business.siteUrl ? html`<meta property="og:url" content="${business.siteUrl + canonical}">` : ''}
+  <meta name="twitter:card" content="summary_large_image">
+  <link rel="icon" href="/favicon.ico" sizes="48x48">
+  <link rel="icon" href="/img/icon-96.png" type="image/png" sizes="96x96">
+  <link rel="icon" href="/img/icon-192.png" type="image/png" sizes="192x192">
   <link rel="apple-touch-icon" href="/img/apple-touch-icon.png">
   <link rel="preload" href="/fonts/karantina-hebrew-700-normal.woff2" as="font" type="font/woff2" crossorigin>
   <link rel="preload" href="/fonts/ibm-plex-sans-hebrew-hebrew-400-normal.woff2" as="font" type="font/woff2" crossorigin>
