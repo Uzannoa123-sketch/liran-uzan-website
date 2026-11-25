@@ -272,7 +272,7 @@ adminRouter.get('/vehicles', (req, res) =>
     admin.vehiclesList({
       vehicles: store.vehicles(),
       filter: statuses[req.query.status] ? req.query.status : '',
-      sync: { last: store.settings().lastSync, running: sync.isRunning(), enabled: Number(process.env.MACHINE_SYNC_HOURS ?? 6) > 0, hours: Number(process.env.MACHINE_SYNC_HOURS ?? 6) },
+      sync: { last: store.settings().lastSync, running: sync.isRunning(), enabled: Number(process.env.MACHINE_SYNC_HOURS ?? 1) > 0, hours: Number(process.env.MACHINE_SYNC_HOURS ?? 1) },
       csrf: res.locals.csrf,
       flash: flashFrom(req),
       newLeads: openLeads(),

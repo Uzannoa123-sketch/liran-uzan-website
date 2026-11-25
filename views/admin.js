@@ -101,7 +101,7 @@ function syncPanel(sync, csrf) {
       <div>
         <h2 id="sync-title">סנכרון עם משין</h2>
         <p class="muted small">${sync.enabled
-          ? `האתר בודק את המודעות של לירן ב-machine.co.il כל ${sync.hours} שעות. מודעה חדשה נוספת לאתר, ומודעה שירדה מוסתרת.`
+          ? `האתר בודק את המודעות של לירן ב-machine.co.il ${sync.hours === 1 ? 'כל שעה' : `כל ${sync.hours} שעות`}. מודעה חדשה נוספת לאתר, ומודעה שירדה מוסתרת.`
           : 'הסנכרון האוטומטי כבוי. אפשר לסנכרן ידנית.'}</p>
       </div>
       <form method="post" action="/admin/sync">
