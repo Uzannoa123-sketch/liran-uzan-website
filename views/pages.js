@@ -1,7 +1,7 @@
 'use strict';
 
 const { html, raw, paragraphs, number, price } = require('../lib/html');
-const { business, categories, categoryBySlug, statuses, specFields, whatsappLink } = require('../lib/site');
+const { business, categories, categoryBySlug, subtypeName, statuses, specFields, whatsappLink } = require('../lib/site');
 const { page } = require('./layout');
 const { icon } = require('./icons');
 const { vehicleCard, vehicleTitle, vehicleName, photo, dataPlate, statusBadge, leadForm, contactButtons, pageHead } = require('./components');
@@ -12,6 +12,11 @@ function home({ vehicles, testimonials, settings, counts }) {
   const available = vehicles.filter((v) => v.status !== 'sold');
   const latest = available.slice(0, 6);
   const hero = settings.heroImage;
+  // The band shows only categories that have something in stock, so a click
+  // never lands on an empty page. 7+ categories wrap into two even rows.
+  const stocked = categories.filter((c) => counts[c.slug]);
+  const bandCats = stocked.length ? stocked : categories;
+  const bandCols = bandCats.length <= 6 ? bandCats.length : Math.ceil(bandCats.length / 2);
 
   const body = html`
   <section class="hero ${hero ? 'hero--photo' : 'hero--emblem'}">
@@ -35,9 +40,9 @@ function home({ vehicles, testimonials, settings, counts }) {
 
   <section class="cat-band" aria-labelledby="cat-band-title">
     <h2 class="sr-only" id="cat-band-title">קטגוריות</h2>
-    <ul class="cat-band__list wrap-wide">
-      ${categories.map(
-        (c) => html`<li><a class="cat-band__item" href="/catalog?category=${c.slug}">
+    <ul class="cat-band__list wrap-wide" style="--cols: ${bandCols}">
+      ${bandCats.map(
+        (c, i) => html`<li class="${i % bandCols === 0 ? 'is-row-start' : ''} ${i >= bandCols ? 'is-wrapped' : ''}"><a class="cat-band__item" href="/catalog?category=${c.slug}">
           <span class="cat-band__name">${c.name}</span>
         </a></li>`
       )}
@@ -209,20 +214,30 @@ const SORTS = [
 function catalog({ results, filters, options, total }) {
   const cat = categoryBySlug[filters.category];
   const sel = (a, b) => (String(a) === String(b) ? raw('selected') : '');
-  const activeCount = ['category', 'make', 'model', 'yearFrom', 'yearTo', 'q'].filter((k) => filters[k]).length + (filters.sold ? 1 : 0);
-  const title = cat ? cat.name : 'מלאי כלים';
+  const activeCount = ['category', 'subtype', 'make', 'model', 'yearFrom', 'yearTo', 'q'].filter((k) => filters[k]).length + (filters.sold ? 1 : 0);
+  const title = cat ? (filters.subtype ? subtypeName(cat.slug, filters.subtype) : cat.name) : 'מלאי כלים';
+  const chipHref = (st) => `/catalog?category=${cat.slug}${st ? `&subtype=${st}` : ''}`;
+  const chips = cat && cat.subtypes
+    ? html`<nav class="chips" aria-label="סוג הכלי">
+        <a class="chip" href="${chipHref('')}" ${!filters.subtype ? raw('aria-current="page"') : ''}>הכול</a>
+        ${cat.subtypes.map((st) => html`<a class="chip" href="${chipHref(st.slug)}" ${filters.subtype === st.slug ? raw('aria-current="page"') : ''}>${st.name}</a>`)}
+      </nav>`
+    : '';
 
   const body = html`
   ${pageHead({
     title,
     intro: cat ? cat.blurb : 'כל הכלים שזמינים עכשיו. סננו לפי סוג כלי, יצרן, דגם ושנה.',
-    crumbs: cat ? [{ label: 'מלאי כלים', href: '/catalog' }, { label: cat.name }] : [{ label: 'מלאי כלים' }],
+    crumbs: cat
+      ? [{ label: 'מלאי כלים', href: '/catalog' }, ...(filters.subtype ? [{ label: cat.name, href: chipHref('') }] : []), { label: title }]
+      : [{ label: 'מלאי כלים' }],
   })}
   <section class="section section--tight">
     <div class="wrap catalog">
       <details class="filters" ${activeCount ? raw('open') : ''} data-filters>
         <summary class="filters__toggle">${icon('sliders', { size: 18 })}סינון וחיפוש${activeCount ? html` <span class="pill">${activeCount}</span>` : ''}</summary>
         <form class="filters__form" method="get" action="/catalog" data-filter-form>
+          ${filters.subtype ? html`<input type="hidden" name="subtype" value="${filters.subtype}">` : ''}
           <div class="field field--search">
             <label for="f-q">חיפוש חופשי</label>
             <div class="input-icon">${icon('search', { size: 18 })}<input id="f-q" name="q" type="search" value="${filters.q || ''}" placeholder="למשל: ג'ון דיר 4x4"></div>
@@ -270,6 +285,7 @@ function catalog({ results, filters, options, total }) {
       </details>
 
       <div class="results">
+        ${chips}
         <div class="results__bar">
           <form method="get" action="/catalog" class="sort" data-sort-form>
             ${Object.entries(filters)
@@ -312,6 +328,7 @@ function vehicle({ v, related }) {
   const images = v.images || [];
   const specs = [
     { label: 'קטגוריה', value: cat ? cat.name : '' },
+    { label: 'סוג', value: subtypeName(v.category, v.subtype) },
     { label: 'יצרן', value: [v.make, v.makeHe && `(${v.makeHe})`].filter(Boolean).join(' ') },
     { label: 'דגם', value: v.model },
     { label: 'שנת ייצור', value: v.year },
@@ -382,7 +399,7 @@ function vehicle({ v, related }) {
       </section>
 
       <aside class="vpage__panel">
-        <p class="vpage__cat">${cat ? cat.name : ''} ${statusBadge(v)}</p>
+        <p class="vpage__cat">${subtypeName(v.category, v.subtype) || (cat ? cat.name : '')} ${statusBadge(v)}</p>
         <h1 class="vpage__title">${title}</h1>
         ${dataPlate(v)}
         ${sold
