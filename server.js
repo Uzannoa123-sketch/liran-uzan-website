@@ -7,7 +7,7 @@ const multer = require('multer');
 const store = require('./lib/store');
 const auth = require('./lib/auth');
 const { processImage, removeImage, UPLOAD_DIR } = require('./lib/images');
-const { business, categories, categoryBySlug, subtypeName, statuses, specFields } = require('./lib/site');
+const { business, categories, categoryBySlug, categoryAliases, subtypeName, statuses, specFields } = require('./lib/site');
 const pages = require('./views/pages');
 const sync = require('./lib/sync');
 const mailer = require('./lib/mailer');
@@ -136,7 +136,13 @@ app.get('/categories', (req, res) => {
   send(res, pages.categoriesPage({ counts: categoryCounts(vehicles), covers }));
 });
 
-app.get('/catalog', (req, res) => {
+app.get('/catalog', (req, res, next) => {
+  // Links to a merged category move permanently to its new home.
+  if (typeof req.query.category === 'string' && categoryAliases[req.query.category]) {
+    const q = new URLSearchParams(req.query);
+    q.set('category', categoryAliases[req.query.category]);
+    return res.redirect(301, `/catalog?${q}`);
+  }
   const all = publicVehicles();
   const filters = pickFilters(req.query);
   const scope = all.filter((v) => (filters.sold ? true : v.status !== 'sold'));
