@@ -107,3 +107,7 @@ body.admin { background: #f5f6f5; }
 .sync-panel__last ul { list-style: none; display: grid; gap: 0.2rem; margin-top: 0.35rem; }
 .sync-panel__last.is-error { background: #fbeaea; }
 .sync-warning { color: var(--danger); font-weight: 600; margin-top: 0.5rem; }
+
+.covers-form { display: grid; gap: 0.9rem; }
+.cover-row { display: grid; grid-template-columns: 96px 1fr; gap: 1rem; align-items: end; }
+.cover-row .field select { min-height: 48px; padding: 0.5rem 0.75rem; border: 1.5px solid #8a8f94; border-radius: var(--radius); background: var(--white); width: 100%; }

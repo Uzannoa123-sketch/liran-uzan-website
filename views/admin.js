@@ -385,7 +385,34 @@ function testimonialsPage({ testimonials, csrf, flash, newLeads }) {
   return layout({ title: 'המלצות', active: 'testimonials', body, csrf, flash, newLeads });
 }
 
-function settingsPage({ settings, mail = {}, csrf, flash, newLeads }) {
+function settingsPage({ settings, mail = {}, vehicles = [], csrf, flash, newLeads }) {
+  const picked = settings.categoryCovers || {};
+  const withPhotos = vehicles.filter((v) => v.status !== 'hidden' && v.images && v.images[0]);
+  const coversPanel = html`<section class="panel" id="covers" aria-labelledby="covers-title">
+    <h2 id="covers-title">תמונה ראשית לכל קטגוריה</h2>
+    <p class="muted">התמונה שמופיעה בעמוד "קטגוריות". בחרו כלי, והתמונה הראשית שלו תוצג. בלי בחירה, מוצגת תמונה של הכלי החדש ביותר בקטגוריה.</p>
+    <form method="post" action="/admin/settings/category-covers" class="covers-form">
+      <input type="hidden" name="_csrf" value="${csrf}">
+      ${categories.map((c) => {
+        const current = withPhotos.find((v) => v.id === picked[c.slug]);
+        const own = withPhotos.filter((v) => v.category === c.slug);
+        const others = withPhotos.filter((v) => v.category !== c.slug);
+        const opt = (v) => html`<option value="${v.id}" ${picked[c.slug] === v.id ? raw('selected') : ''}>${vehicleTitle(v)}${v.status === 'sold' ? ' (נמכר)' : ''}</option>`;
+        return html`<div class="cover-row">
+          ${current ? html`<img src="${current.images[0].sm}" alt="" width="96" height="72" class="thumb">` : html`<span class="thumb thumb--empty">${icon('image', { size: 20 })}</span>`}
+          <div class="field">
+            <label for="cover-${c.slug}">${c.name}</label>
+            <select id="cover-${c.slug}" name="cover_${c.slug}">
+              <option value="">אוטומטי (הכלי החדש ביותר)</option>
+              ${own.length ? html`<optgroup label="${c.name}">${own.map(opt)}</optgroup>` : ''}
+              ${others.length ? html`<optgroup label="כלים מקטגוריות אחרות">${others.map(opt)}</optgroup>` : ''}
+            </select>
+          </div>
+        </div>`;
+      })}
+      <div class="form-actions"><button class="btn btn--primary" type="submit">שמירת התמונות</button></div>
+    </form>
+  </section>`;
   const slot = (key, title, help) => html`<section class="panel">
     <h2>${title}</h2>
     <p class="muted">${help}</p>
@@ -416,6 +443,7 @@ function settingsPage({ settings, mail = {}, csrf, flash, newLeads }) {
   const body = html`
   <div class="admin-head"><h1>הגדרות</h1></div>
   ${mailPanel}
+  ${coversPanel}
   ${slot('heroImage', 'תמונה ראשית בדף הבית', 'תמונה רחבה ואיכותית של כלי בשטח. מומלץ לפחות 1800 פיקסלים ברוחב. בלי תמונה, מוצג הלוגו.')}
   ${slot('aboutImage', 'תמונה לעמוד אודות', 'למשל לירן במגרש או ליד כלי. בלי תמונה, מוצג הלוגו.')}`;
   return layout({ title: 'הגדרות', active: 'settings', body, csrf, flash, newLeads });
