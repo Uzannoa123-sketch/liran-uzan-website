@@ -101,7 +101,7 @@ function syncPanel(sync, csrf) {
       <div>
         <h2 id="sync-title">סנכרון עם משין</h2>
         <p class="muted small">${sync.enabled
-          ? `האתר בודק את המודעות של לירן ב-machine.co.il ${sync.hours === 1 ? 'כל שעה' : `כל ${sync.hours} שעות`}. מודעה חדשה נוספת לאתר, ומודעה שירדה מוסתרת.`
+          ? `האתר בודק את המודעות של לירן ב-machine.co.il ${sync.hours === 1 ? 'כל שעה' : `כל ${sync.hours} שעות`}. מודעה חדשה נוספת לאתר, שינויים במודעה מתעדכנים, ומודעה שירדה מוסתרת.`
           : 'הסנכרון האוטומטי כבוי. אפשר לסנכרן ידנית.'}</p>
       </div>
       <form method="post" action="/admin/sync">
@@ -115,7 +115,9 @@ function syncPanel(sync, csrf) {
           ${last.ok
             ? html`<ul class="small">
                 <li>נוספו: ${last.added.length ? list(last.added) : 'אין'}</li>
+                <li>עודכנו לפי משין (תמונות או פרטים): ${last.updated && last.updated.length ? list(last.updated) : 'אין'}</li>
                 <li>הוסתרו כי המודעה ירדה: ${last.hidden.length ? list(last.hidden) : 'אין'}</li>
+                ${last.photosKept && last.photosKept.length ? html`<li>התמונות לא הוחלפו כי שונו בממשק הניהול: ${list(last.photosKept)}</li>` : ''}
                 ${last.restored.length ? html`<li>חזרו לאתר: ${list(last.restored)}</li>` : ''}
               </ul>`
             : html`<p class="small">הסנכרון נכשל: ${last.error}. לא בוצעו שינויים, והסנכרון הבא ינסה שוב.</p>`}
@@ -185,7 +187,7 @@ function vehicleForm({ v, csrf, flash, errors = {}, newLeads }) {
     ${!isNew && v.status !== 'hidden' ? html`<a class="btn btn--outline" href="/catalog/${v.slug}" target="_blank" rel="noopener">${icon('eye', { size: 18 })}צפייה באתר</a>` : ''}
   </div>
   ${v.source && v.source.site === 'machine.co.il'
-    ? html`<p class="muted small">הכלי יובא מ<a href="https://www.machine.co.il/adpage?adid=${v.source.adid}" target="_blank" rel="noopener">מודעה ${v.source.adid} במשין</a>. שינויים שתשמרו כאן לא יידרסו בסנכרון.${v.syncHidden ? ' המודעה ירדה ממשין, ולכן הכלי מוסתר מהאתר. כדי להחזיר אותו, שנו את המצב ל"זמין".' : ''}</p>`
+    ? html`<p class="muted small">הכלי יובא מ<a href="https://www.machine.co.il/adpage?adid=${v.source.adid}" target="_blank" rel="noopener">מודעה ${v.source.adid} במשין</a>. שינויים במודעה (תמונות, שעות, תיאור) מתעדכנים כאן אוטומטית, אבל שדה שתשנו כאן לא יידרס.${v.imagesEditedInAdmin ? ' התמונות של הכלי נערכו כאן, ולכן הסנכרון לא מחליף אותן.' : ''}${v.syncHidden ? ' המודעה ירדה ממשין, ולכן הכלי מוסתר מהאתר. כדי להחזיר אותו, שנו את המצב ל"זמין".' : ''}</p>`
     : ''}
   ${Object.keys(errors).length ? html`<p class="form-error" role="alert" tabindex="-1" data-error-summary>יש לתקן את השדות המסומנים.</p>` : ''}
   <form class="vform" method="post" action="${isNew ? '/admin/vehicles/new' : `/admin/vehicles/${v.id}`}" enctype="multipart/form-data">

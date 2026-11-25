@@ -377,9 +377,12 @@ adminRouter.post('/vehicles/:id', withUpload('photos'), auth.checkCsrf, async (r
       }
     }
   }
-  images = images.concat(await addPhotos(req.files));
+  const newPhotos = await addPhotos(req.files);
+  images = images.concat(newPhotos);
+  // Photos managed by hand from now on: the machine.co.il sync leaves them alone.
+  const imagesEditedInAdmin = Boolean(existing.imagesEditedInAdmin || action || newPhotos.length);
   const syncHidden = data.status === existing.status ? Boolean(existing.syncHidden) : false;
-  store.upsertVehicle({ ...data, id: existing.id, images, syncHidden });
+  store.upsertVehicle({ ...data, id: existing.id, images, syncHidden, imagesEditedInAdmin });
   res.redirect(303, `/admin/vehicles/${existing.id}?ok=saved${action ? '#photos' : ''}`);
 });
 
