@@ -30,6 +30,19 @@
     });
   });
 
+  // Show the "סוג" field only for categories that have sub-types.
+  const category = document.getElementById('category');
+  if (category) {
+    const sync = () =>
+      document.querySelectorAll('[data-subtype-for]').forEach((box) => {
+        const on = box.dataset.subtypeFor === category.value;
+        box.hidden = !on;
+        box.querySelector('select').disabled = !on;
+      });
+    category.addEventListener('change', sync);
+    sync();
+  }
+
   // Keep the save button from being double-clicked during uploads.
   document.querySelectorAll('form.vform').forEach((form) =>
     form.addEventListener('submit', (e) => {

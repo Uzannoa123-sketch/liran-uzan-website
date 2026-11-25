@@ -1,7 +1,7 @@
 'use strict';
 
 const { html, raw, number, price } = require('../lib/html');
-const { business, categories, categoryBySlug, statuses, specFields, whatsappLink } = require('../lib/site');
+const { business, categories, categoryBySlug, subtypeName, statuses, specFields, whatsappLink } = require('../lib/site');
 const { icon } = require('./icons');
 const { vehicleTitle } = require('./components');
 
@@ -148,7 +148,7 @@ function vehiclesList({ vehicles, filter, sync, csrf, flash, newLeads }) {
             (v) => html`<tr class="${v.status === 'sold' ? 'is-sold' : ''}">
               <td>${v.images && v.images[0] ? html`<img class="thumb" src="${v.images[0].sm}" alt="" width="96" height="72">` : html`<span class="thumb thumb--empty">${icon('image', { size: 20 })}</span>`}</td>
               <td><a class="strong" href="/admin/vehicles/${v.id}">${vehicleTitle(v)}</a><div class="muted small">${(v.images || []).length} תמונות${v.source && v.source.site === 'machine.co.il' ? html` · <a href="https://www.machine.co.il/adpage?adid=${v.source.adid}" target="_blank" rel="noopener">ממשין</a>` : ''}${v.syncHidden ? ' · המודעה ירדה ממשין' : ''}</div></td>
-              <td>${categoryBySlug[v.category] ? categoryBySlug[v.category].short : '—'}</td>
+              <td>${categoryBySlug[v.category] ? categoryBySlug[v.category].short : '—'}${subtypeName(v.category, v.subtype) ? html`<div class="muted small">${subtypeName(v.category, v.subtype)}</div>` : ''}</td>
               <td>${v.year || '—'}</td>
               <td>${v.price ? price(v.price) : '—'}</td>
               <td>
@@ -204,6 +204,17 @@ function vehicleForm({ v, csrf, flash, errors = {}, newLeads }) {
           </select>
           ${err('category')}
         </div>
+        ${categories
+          .filter((c) => c.subtypes)
+          .map(
+            (c) => html`<div class="field" data-subtype-for="${c.slug}" ${v.category === c.slug ? '' : raw('hidden')}>
+              <label for="subtype-${c.slug}">סוג</label>
+              <select id="subtype-${c.slug}" name="subtype" ${v.category === c.slug ? '' : raw('disabled')}>
+                <option value="">לא צוין</option>
+                ${c.subtypes.map((st) => html`<option value="${st.slug}" ${v.subtype === st.slug ? raw('selected') : ''}>${st.name}</option>`)}
+              </select>
+            </div>`
+          )}
         <div class="field">
           <label for="status">מצב</label>
           <select id="status" name="status">

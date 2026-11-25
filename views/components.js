@@ -1,7 +1,7 @@
 'use strict';
 
 const { html, raw, number, price } = require('../lib/html');
-const { business, categoryBySlug, statuses, whatsappLink } = require('../lib/site');
+const { business, categoryBySlug, subtypeName, statuses, whatsappLink } = require('../lib/site');
 const { icon } = require('./icons');
 
 function vehicleName(v) {
@@ -51,7 +51,7 @@ function vehicleCard(v, { headingLevel = 3 } = {}) {
         ${v.status === 'sold' ? html`<span class="sold-stamp" aria-hidden="true">נמכר</span>` : ''}
       </div>
       <div class="vcard__body">
-        <p class="vcard__cat">${cat ? cat.name : ''} ${statusBadge(v)}</p>
+        <p class="vcard__cat">${subtypeName(v.category, v.subtype) || (cat ? cat.name : '')} ${statusBadge(v)}</p>
         ${raw(`<${h} class="vcard__title">`)}${title}${raw(`</${h}>`)}
         ${dataPlate(v, { compact: true })}
         ${v.status === 'sold' ? html`<p class="vcard__price">נמכר</p>` : v.price ? html`<p class="vcard__price">${price(v.price)}</p>` : ''}

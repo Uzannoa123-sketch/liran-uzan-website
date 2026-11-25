@@ -7,7 +7,7 @@ const multer = require('multer');
 const store = require('./lib/store');
 const auth = require('./lib/auth');
 const { processImage, removeImage, UPLOAD_DIR } = require('./lib/images');
-const { business, categories, categoryBySlug, statuses, specFields } = require('./lib/site');
+const { business, categories, categoryBySlug, subtypeName, statuses, specFields } = require('./lib/site');
 const pages = require('./views/pages');
 const sync = require('./lib/sync');
 const mailer = require('./lib/mailer');
@@ -86,12 +86,14 @@ function pickFilters(q) {
   }
   if (q.sold === '1') f.sold = '1';
   if (f.category && !categoryBySlug[f.category]) delete f.category;
+  if (typeof q.subtype === 'string' && f.category && subtypeName(f.category, q.subtype)) f.subtype = q.subtype;
   return f;
 }
 
 function applyFilters(list, f) {
   let out = list.filter((v) => (f.sold ? true : v.status !== 'sold'));
   if (f.category) out = out.filter((v) => v.category === f.category);
+  if (f.subtype) out = out.filter((v) => v.subtype === f.subtype);
   if (f.make) out = out.filter((v) => norm(v.make) === norm(f.make));
   if (f.model) out = out.filter((v) => norm(v.model) === norm(f.model));
   if (f.yearFrom) out = out.filter((v) => Number(v.year) >= Number(f.yearFrom));
@@ -100,7 +102,7 @@ function applyFilters(list, f) {
     const terms = norm(f.q).split(' ');
     out = out.filter((v) => {
       const hay = norm(
-        [v.title, v.make, v.makeHe, v.model, v.year, v.description, categoryBySlug[v.category] && categoryBySlug[v.category].name, ...Object.values(v.specs || {})].join(' ')
+        [v.title, v.make, v.makeHe, v.model, v.year, v.description, categoryBySlug[v.category] && categoryBySlug[v.category].name, subtypeName(v.category, v.subtype), ...Object.values(v.specs || {})].join(' ')
       );
       return terms.every((t) => hay.includes(t));
     });
@@ -301,6 +303,7 @@ function vehicleFromBody(b) {
     .slice(0, 30);
   return {
     category: categoryBySlug[b.category] ? b.category : '',
+    subtype: subtypeName(b.category, b.subtype) ? b.subtype : '',
     status: statuses[b.status] ? b.status : 'available',
     make: String(b.make || '').trim().slice(0, 60),
     model: String(b.model || '').trim().slice(0, 80),
