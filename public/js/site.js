@@ -127,7 +127,8 @@
         status.focus();
       } catch (err) {
         status.classList.add('is-error');
-        status.textContent = `${err.message} אפשר גם להתקשר: 052-6003333`;
+        const phone = (document.querySelector('.header-phone span') || {}).textContent || '';
+        status.textContent = `${err.message}${phone ? ` אפשר גם להתקשר: ${phone}` : ''}`;
       } finally {
         btn.disabled = false;
         btn.removeAttribute('aria-busy');

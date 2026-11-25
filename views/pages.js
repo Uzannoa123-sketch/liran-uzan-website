@@ -199,7 +199,7 @@ function categoriesPage({ counts, covers }) {
       </ul>
     </div>
   </section>`;
-  return page({ title: 'קטגוריות: טרקטורים, מעמיסים וציוד מכני', active: 'categories', body, canonical: '/categories', description: 'טרקטורים חקלאיים, מיני מעמיסים, בובקטים, שופלים, מלגזות, נגררים, טרקטורונים וציוד מכני כבד למכירה אצל לירן אוזן, מושב עולש. 052-6003333' });
+  return page({ title: 'קטגוריות: טרקטורים, מעמיסים וציוד מכני', active: 'categories', body, canonical: '/categories', description: `טרקטורים חקלאיים, מיני מעמיסים, בובקטים, שופלים, מלגזות, נגררים, טרקטורונים וציוד מכני כבד למכירה אצל לירן אוזן, מושב עולש. ${business.phoneDisplay}` });
 }
 
 // ------------------------------------------------------------------ catalog
@@ -528,7 +528,7 @@ function trade() {
     active: 'trade',
     body,
     canonical: '/trade',
-    description: 'מוכרים טרקטור או מעמיס? רוצים טרייד אין? לירן אוזן קונה, מוכר ומחליף כלים חקלאיים וציוד מכני. 052-6003333',
+    description: `מוכרים טרקטור או מעמיס? רוצים טרייד אין? לירן אוזן קונה, מוכר ומחליף כלים חקלאיים וציוד מכני. ${business.phoneDisplay}`,
   });
 }
 

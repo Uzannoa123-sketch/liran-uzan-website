@@ -143,7 +143,7 @@ function page({ title, description, active, body, jsonLd, image, canonical, body
   const fullTitle = title ? `${title} | ${business.fullName}` : `${business.fullName} | קנייה, מכירה וטרייד אין`;
   const desc =
     description ||
-    'טרקטורים חקלאיים, מיני מעמיסים, שופלים וציוד מכני למכירה. אולם תצוגה במושב עולש שבשרון: רואים את הכלי, יוצאים לנסיעת מבחן וסוגרים עסקה. קנייה, מכירה וטרייד אין. 052-6003333';
+    `טרקטורים חקלאיים, מיני מעמיסים, שופלים וציוד מכני למכירה. אולם תצוגה במושב עולש שבשרון: רואים את הכלי, יוצאים לנסיעת מבחן וסוגרים עסקה. קנייה, מכירה וטרייד אין. ${business.phoneDisplay}`;
   const ld = [...siteJsonLd(), ...(jsonLd ? [jsonLd] : [])];
   const ogImage = image || '/img/og-image.jpg';
   return html`<!doctype html>
